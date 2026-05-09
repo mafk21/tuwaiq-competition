@@ -1,0 +1,36 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import bcrypt from 'bcryptjs';
+
+export async function GET() {
+  try {
+    const passwordHash = await bcrypt.hash('Admin@123', 10);
+    
+    await prisma.user.upsert({
+      where: { email: 'admin@tuwaiq.local' },
+      update: {},
+      create: {
+        email: 'admin@tuwaiq.local',
+        username: 'admin',
+        passwordHash,
+        role: 'ADMIN',
+        emailVerified: true,
+      },
+    });
+
+    const challenges = [
+      { title: "Roman's Secret", description: "Shift by 3", cipherType: "Caesar Cipher", ciphertext: "WXZDLT", solution: "TUWAIQ", points: 10, difficulty: "EASY" },
+      { title: "Web's Language", description: "Decode this string", cipherType: "Base64", ciphertext: "Q3liZXJTZWN1cml0eQ==", solution: "CyberSecurity", points: 20, difficulty: "MEDIUM" },
+      { title: "Machine Code", description: "Convert from Base16", cipherType: "Hex", ciphertext: "4861636b6572", solution: "Hacker", points: 30, difficulty: "MEDIUM" },
+      { title: "French Diplomat", description: "Key is 'KEY'", cipherType: "Vigenère", ciphertext: "HYAOKQ", solution: "XORING", points: 50, difficulty: "HARD" }
+    ];
+
+    for (const c of challenges) {
+      await prisma.challenge.create({ data: c });
+    }
+
+    return NextResponse.json({ status: "Success", message: "Database seeded with Admin and 4 Challenges" });
+  } catch (error: any) {
+    return NextResponse.json({ status: "Error", message: error.message }, { status: 500 });
+  }
+}
